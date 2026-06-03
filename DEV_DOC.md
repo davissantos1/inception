@@ -1,36 +1,57 @@
-_This project has been created as part of the 42 curriculum by dasimoes, vitosant_
+_Developer Documentation - Inception 42SP
 
-# MiniRT
+# DEV_DOC
 
-## Description
+## Setting up your own services
 
-The goal of the project is to build our own tiny version of a Ray Tracer, which is a piece of 
-software that can generate images in a more realistic manner by simulating the behaviour of light
-as it would physically occur in nature. We implemented the mandatory and bonus requirements,
-which include the implementation of the following objects and requirements below:
+You may choose to set up your services from scratch and to do that you will need
+to make a dockerfile, an entrypoint script and a configuration file for each service
+you are setting up. The docker file dowloads the basic userland needed for the process
+and installs any dependencies you might need while building the image and copies both the
+entrypoint script and configuration file to the image itself. The entrypoint script has 
+any commands you might need to run to have the container set up and the configuration file
+tunes the services to your needs. Those 3 files are essential for any service. To coordinate 
+those containers in a single file through docker-compose you will also need a .yml file configuring
+all the necessary volumes, networks and services and how the interact for your application.
+These are necessary in order to coordinate your containers well.
 
-Mandatory:
+## Makefile and docker compose
 
-Objects - Plane, sphere and cylinder
-Requirements - Simple geometric objects, light and camera management, transformations and parsing
+You may use docker-compose to manage all your containers according to the docker-compose.yml
+file you have written and you may also write your own Makefile including all these commands 
+so you can better automate this process. Each command below I made using a specific sequence
+of docker-compose commands inside my makefile.
 
-Bonus:
+I also made a make manual command one may use to interactively generate a new .env file 
+changing the default configuration I use and in that command I used the read command to
+capture terminal input.
 
-Objects - Plane, sphere, cylinder, cone, parallelepiped, rectangle and disk
-Requirements - Everything from mandatory plus other second degree object, full phong reflection model,
-colored and multi-spot lights, bump map textures and color disruption.
+## Management
 
-## Instructions
+There are a few commands you may use to manage the infrastructure and those are outlined below:
 
-To compile and run the program you need to clone this repository, go its root directory and
-type in make or make bonus in your terminal, after that you may render your own map or use one of
-the ones provided in this repository by typing the binary name "miniRT" or "miniRT_bonus" and the path 
-to the map to be renderized.
+make - builds each image and sets up the standard secrets and enviroment variables
 
-## Resources
+make up - runs the containers
 
-The resources utilized for this project are mainly what's available on the web and 2 books
-that are listed below:
+make stop - stops the containers
 
-1- The RayTracer Challenge - http://raytracerchallenge.com/
-2- Ray Tracing in One Weekend - https://raytracing.github.io/books/RayTracingInOneWeekend.html 
+make restart - restarts the containers
+
+make status - spits out a log with everything happening inside each service
+
+make clean - stops and deletes the containers alongside their network
+
+make fclean - cleans everything and deletes the volumes 
+
+make re - cleans everything and then rebuilds it 
+
+## Locations
+
+You may find sensitive secrets information stored in the secrets folder and you may also find
+your volume data being saved in a bind mount fashion inside the paths below where <USER> is 
+the system user that's saved in the $USER enviroment variable.
+
+/home/<USER>/data/wordpress
+/home/<USER>/data/mariadb
+

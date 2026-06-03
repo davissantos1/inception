@@ -19,15 +19,23 @@ RESET := \033[0m
 # Rules
 all: build
 	@mkdir -p $(SECRETS_DIR)
-	@printf "Setting up default configuration...\n"
-	@cp ./srcs/.env.example ./srcs/.env
-	@echo "$(MYSQL_ROOT_PASS_MAKE)" > $(SECRETS_DIR)/db_root_password.txt
-	@echo "$(MYSQL_PASS_MAKE)" > $(SECRETS_DIR)/db_password.txt
-	@echo "$(WP_ADMIN_PASS_MAKE)" > $(SECRETS_DIR)/wp_admin_password.txt
-	@echo "$(WP_COMMON_PASS_MAKE)" > $(SECRETS_DIR)/wp_common_password.txt
+	@mkdir -p /home/$(USER)/data/wordpress
+	@mkdir -p /home/$(USER)/data/mariadb
+	@if [ ! -f "./srcs/.env" ]; then \
+		echo "Setting up default configuration..."; \
+		cp ./srcs/.env.example ./srcs/.env; \
+		echo "$(MYSQL_ROOT_PASS_MAKE)" > $(SECRETS_DIR)/db_root_password.txt; \
+		echo "$(MYSQL_PASS_MAKE)" > $(SECRETS_DIR)/db_password.txt; \
+		echo "$(WP_ADMIN_PASS_MAKE)" > $(SECRETS_DIR)/wp_admin_password.txt; \
+		echo "$(WP_COMMON_PASS_MAKE)" > $(SECRETS_DIR)/wp_common_password.txt; \
+		echo "127.0.0.1  $(DOMAIN_NAME)" | sudo tee -a /etc/hosts > /dev/null; \
+	else \
+		echo "Using the present .env file..."; \
+	fi
 
 manual:
 	@mkdir -p $(SECRETS_DIR)
+	@rm -f ./srcs/.env
 	@echo "MYSQL_DATABASE=wordpress" >> ./srcs/.env;
 	@echo  "We need to set up $(RED)enviroment$(RESET) variables"
 	@echo  "Type in accordingly or leave blank for default"
@@ -49,35 +57,26 @@ manual:
 	echo "WP_SECOND_EMAIL=$${wp_second_email:-$(WP_SECOND_EMAIL)}" >> ./srcs/.env
 	@read -s -p "Wordpress common user password [$(WP_COMMON_PASS_MAKE)]: " wp_common_pass; echo ""; \
 	echo "$${wp_common_pass:-$(WP_COMMON_PASS_MAKE)}" > $(SECRETS_DIR)/wp_common_password.txt
-	@read -p "Domain name [$(DOMAIN_NAME)]: " domain; \
-	echo "DOMAIN_NAME=$${domain:-$(DOMAIN_NAME)}" >> ./srcs/.env
+	@echo "DOMAIN_NAME=$(DOMAIN_NAME)" >> ./srcs/.env
 
 build:
 	@printf "💻 ${GREEN}Building: ${RESET}docker images in background\n"
 	@docker-compose -f $(COMPOSE_FILE) build> /dev/null 2>&1
 	@printf "💻 ${GREEN}DONE!${RESET}\n"
 
-domain: fclean
-	@cp ./srcs/.env.example ./srcs/.env
-	@read -p "Type in the new domain name: " new_domain; \
-	sed -i "\$$c\DOMAIN_NAME=$${new_domain}" ./srcs/.env; \
-	sudo sed -i "/$(DOMAIN_NAME)/d" /etc/hosts; \
-	echo "127.0.0.1  $${new_domain}" | sudo tee -a /etc/hosts > /dev/null
-	@$(MAKE) all up
-
 up:
 	@printf "💻 ${YELLOW}Starting: ${RESET}docker images in background\n"
-	@docker-compose -f $(COMPOSE_FILE) up -d> /dev/null 2>&1
+	@docker-compose -f $(COMPOSE_FILE) up -d > /dev/null 2>&1
+	@sleep 2
 	@printf "💻 ${YELLOW}LIVE!${RESET}\n"
 
 stop:
 	@printf "${BLUE}Stopping services...${RESET}\n"
 	@docker-compose -f $(COMPOSE_FILE) stop> /dev/null 2>&1
 
-destroy:
-	@printf "${RED}Destroying services...${RESET}\n"
-	@docker-compose -f $(COMPOSE_FILE) kill> /dev/null 2>&1
-	@docker-compose -f $(COMPOSE_FILE) rm -f> /dev/null 2>&1
+status:
+	@printf "${YELLOW}Logging: ${RESET} getting log files for each service\n"
+	@docker-compose -f $(COMPOSE_FILE) logs > logs.txt
 
 restart:
 	@printf "${RED}Restarting services...${RESET}\n"
@@ -85,15 +84,15 @@ restart:
 
 clean: stop
 	@printf "${RED}Cleaning containers and networks...${RESET}\n"
-	@docker-compose -f $(COMPOSE_FILE) down -v > /dev/null 2>&1
+	@docker-compose -f $(COMPOSE_FILE) down > /dev/null 2>&1
 
 fclean: clean
 	@printf "${RED}Deep cleaning: removing images and local volumes...${RESET}\n"
-	@docker system prune -af > /dev/null 2>&1
-	@sudo rm -rf /home/$(USER)/data/wordpress/*
-	@sudo rm -rf /home/$(USER)/data/mariadb/*
+	@docker system prune -af --volumes > /dev/null 2>&1
+	@sudo rm -rf /home/$(USER)/data/wordpress
+	@sudo rm -rf /home/$(USER)/data/mariadb
 	@rm -rf $(SECRETS_DIR) ./srcs/.env
 
 re: fclean all
 
-.PHONY: all restart destroy manual up down build clean fclean re
+.PHONY: all restart manual up down build clean fclean re
