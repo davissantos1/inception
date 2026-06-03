@@ -22,7 +22,7 @@ all: build
 	@mkdir -p /home/$(USER)/data/wordpress
 	@mkdir -p /home/$(USER)/data/mariadb
 	@if [ ! -f "./srcs/.env" ]; then \
-		printf "⚠️  ${BLUE}Warning: ${RESET}setting up default .env file!\n"
+		printf "⚠️ ${BLUE}Warning: ${RESET} setting up default .env file!\n"; \
 		cp ./srcs/.env.example ./srcs/.env; \
 		echo "$(MYSQL_ROOT_PASS_MAKE)" > $(SECRETS_DIR)/db_root_password.txt; \
 		echo "$(MYSQL_PASS_MAKE)" > $(SECRETS_DIR)/db_password.txt; \
@@ -30,7 +30,7 @@ all: build
 		echo "$(WP_COMMON_PASS_MAKE)" > $(SECRETS_DIR)/wp_common_password.txt; \
 		echo "127.0.0.1  $(DOMAIN_NAME)" | sudo tee -a /etc/hosts > /dev/null; \
 	else \
-		printf "⚠️  ${BLUE}Warning: ${RESET}using already generated .env file!\n"
+		printf "⚠️ ${BLUE}Warning: ${RESET} using already generated .env file!\n"; \
 	fi
 
 manual:
