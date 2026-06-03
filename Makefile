@@ -37,7 +37,7 @@ manual:
 	@mkdir -p $(SECRETS_DIR)
 	@rm -f ./srcs/.env
 	@echo "MYSQL_DATABASE=wordpress" >> ./srcs/.env;
-	@echo  "We need to set up $(RED)enviroment$(RESET) variables"
+	@printf  "We need to set up $(RED)enviroment$(RESET) variables\n"
 	@echo  "Type in accordingly or leave blank for default"
 	@read -p "MySQL user [$(MYSQL_USER)]: " sql_user; \
 	echo "MYSQL_USER=$${sql_user:-$(MYSQL_USER)}" >> ./srcs/.env
