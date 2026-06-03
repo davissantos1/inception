@@ -22,7 +22,7 @@ all: build
 	@mkdir -p /home/$(USER)/data/wordpress
 	@mkdir -p /home/$(USER)/data/mariadb
 	@if [ ! -f "./srcs/.env" ]; then \
-		echo "Setting up default configuration..."; \
+		printf "⚠️  ${BLUE}Warning: ${RESET}setting up default .env file!\n"
 		cp ./srcs/.env.example ./srcs/.env; \
 		echo "$(MYSQL_ROOT_PASS_MAKE)" > $(SECRETS_DIR)/db_root_password.txt; \
 		echo "$(MYSQL_PASS_MAKE)" > $(SECRETS_DIR)/db_password.txt; \
@@ -30,7 +30,7 @@ all: build
 		echo "$(WP_COMMON_PASS_MAKE)" > $(SECRETS_DIR)/wp_common_password.txt; \
 		echo "127.0.0.1  $(DOMAIN_NAME)" | sudo tee -a /etc/hosts > /dev/null; \
 	else \
-		echo "Using the present .env file..."; \
+		printf "⚠️  ${BLUE}Warning: ${RESET}using already generated .env file!\n"
 	fi
 
 manual:
@@ -62,36 +62,42 @@ manual:
 build:
 	@printf "💻 ${GREEN}Building: ${RESET}docker images in background\n"
 	@docker-compose -f $(COMPOSE_FILE) build> /dev/null 2>&1
-	@printf "💻 ${GREEN}DONE!${RESET}\n"
+	@printf "💻 ${GREEN}Building: ${RESET}finished!\n"
 
 up:
-	@printf "💻 ${YELLOW}Starting: ${RESET}docker images in background\n"
+	@printf "🔥 ${YELLOW}Starting: ${RESET}docker images in background\n"
 	@docker-compose -f $(COMPOSE_FILE) up -d > /dev/null 2>&1
 	@sleep 2
-	@printf "💻 ${YELLOW}LIVE!${RESET}\n"
+	@printf "🔥 ${YELLOW}Starting: ${RESET}containers are live!\n"
 
 stop:
-	@printf "${BLUE}Stopping services...${RESET}\n"
+	@printf "⛔ ${BLUE}Stopping: ${RESET} containers are being shut down\n"
 	@docker-compose -f $(COMPOSE_FILE) stop> /dev/null 2>&1
+	@printf "⛔ ${BLUE}Stopping: ${RESET} containers are down!\n"
 
 status:
-	@printf "${YELLOW}Logging: ${RESET} getting log files for each service\n"
+	@printf "📜 ${YELLOW}Logging: ${RESET} getting log files for each service\n"
 	@docker-compose -f $(COMPOSE_FILE) logs > logs.txt
+	@printf "📜 ${YELLOW}Logging: ${RESET} logs.txt generated!\n"
 
 restart:
-	@printf "${RED}Restarting services...${RESET}\n"
+	@printf "🔄 ${RED}Restarting: ${RESET} services are being restarted\n"
 	@docker-compose -f $(COMPOSE_FILE) restart > /dev/null 2>&1
+	@printf "🔄 ${RED}Restarting: ${RESET} finished restarting!\n"
 
 clean: stop
-	@printf "${RED}Cleaning containers and networks...${RESET}\n"
+	@printf "🧹 ${RED}Cleaning: ${RESET} destroying network and live containers!\n"
 	@docker-compose -f $(COMPOSE_FILE) down > /dev/null 2>&1
+	@printf "🧹 ${RED}Cleaning: ${RESET} containers and networks are clean!\n"
 
 fclean: clean
-	@printf "${RED}Deep cleaning: removing images and local volumes...${RESET}\n"
+	@printf "💣 ${RED}Deep cleaning: ${RESET} removing images, env file and volumes\n"
 	@docker system prune -af --volumes > /dev/null 2>&1
 	@sudo rm -rf /home/$(USER)/data/wordpress
 	@sudo rm -rf /home/$(USER)/data/mariadb
 	@rm -rf $(SECRETS_DIR) ./srcs/.env
+	@printf "💣 ${RED}Deep cleaning: ${RESET} everything clean!\n"
+
 
 re: fclean all
 
